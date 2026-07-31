@@ -4,6 +4,7 @@
   "description": "Runs korotovsky/slack-mcp-server against your existing Slack desktop session. Only prerequisite is bunx.",
   "type": "module",
   "license": "MIT",
+  "repository": "https://github.com/p120ph37/slack-desktop-mcp",
   "bin": {
     "slack-desktop-mcp": "./src/cli.ts"
   },
