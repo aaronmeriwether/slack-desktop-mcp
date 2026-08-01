@@ -136,8 +136,7 @@ jobs:
           # The changelog is the source of truth; package.json's committed
           # version is only a placeholder. --allow-same-version because
           # `npm version` treats "already that version" as an error, which
-          # would fail the release whenever the two happen to agree — as they
-          # would on the very first release here (package.json ships 0.1.0).
+          # would fail the release whenever the two happen to agree.
           npm version "${VERSION#v}" --no-git-tag-version --allow-same-version
 
       - name: Extract changelog entry

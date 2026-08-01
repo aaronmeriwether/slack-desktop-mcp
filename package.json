@@ -1,6 +1,6 @@
 {
   "name": "slack-desktop-mcp",
-  "version": "0.1.0",
+  "version": "0.0.0",
   "description": "Runs korotovsky/slack-mcp-server against your existing Slack desktop session. Only prerequisite is bunx.",
   "type": "module",
   "license": "MIT",
