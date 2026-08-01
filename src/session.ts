@@ -1,6 +1,7 @@
 import { chmodSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
+import { log } from "./log.ts";
 
 export interface SlackSession {
   workspace: string;
@@ -37,7 +38,10 @@ export function clearCachedSession(): void {
 }
 
 // The `d` cookie and xoxc token are only valid together, so auth.test needs both.
-export async function isSessionValid(session: SlackSession): Promise<boolean> {
+// null = couldn't ask (offline, unreachable). That is not a rejected session:
+// relaunching Slack can't fix an unreachable slack.com, and the server we exec
+// may well authenticate anyway.
+export async function isSessionValid(session: SlackSession): Promise<boolean | null> {
   try {
     const res = await fetch("https://slack.com/api/auth.test", {
       method: "POST",
@@ -45,7 +49,8 @@ export async function isSessionValid(session: SlackSession): Promise<boolean> {
       body: new URLSearchParams({ token: session.xoxc }).toString(),
     });
     return ((await res.json()) as { ok?: boolean }).ok === true;
-  } catch {
-    return false;
+  } catch (e) {
+    log(`could not verify session: ${(e as Error).message}`);
+    return null;
   }
 }

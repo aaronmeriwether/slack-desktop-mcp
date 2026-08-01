@@ -59,6 +59,14 @@ Spawn/ENOENT error means the GUI-launched app didn't inherit a PATH containing
 Slack already running elsewhere owns its single-instance lock, so step 2 fails
 fast rather than disturbing that window; quit Slack and retry.
 
+It relaunches itself once under `bun --use-system-ca`, so step 1 trusts the
+machine's certificate store; a TLS-intercepting proxy fails it otherwise. If
+step 1 can't complete at all, the cached session is used *unverified* rather
+than treated as expired — relaunching Slack can't fix an unreachable slack.com.
+
+Step 2 costs a Slack launch plus its sign-in, which can exceed an MCP client's
+connect timeout; Claude Code takes `MCP_TIMEOUT` (ms) if a cold start trips it.
+
 Failures also raise a native dialog, because MCP clients don't surface a stdio
 server's stderr. `--no-ui` keeps it headless.
 

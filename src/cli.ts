@@ -13,19 +13,16 @@ import {
 } from "./session.ts";
 import { refreshSessionViaSlackDesktop } from "./slack.ts";
 
-// WebKitGTK's sandbox needs unprivileged user namespaces, which many Linux
-// setups lack. Bun's process.env doesn't reach C getenv(), so the only way to
-// set it is to re-exec -- and it must happen before webview-bun loads, which is
-// why ./error-dialog.ts is imported dynamically and never at the top level.
-if (process.platform === "linux" && !process.env.WEBKIT_DISABLE_SANDBOX_THIS_IS_DANGEROUS) {
-  const { exitCode } = Bun.spawnSync({
-    cmd: [process.execPath, ...Bun.argv.slice(1)],
-    env: { ...process.env, WEBKIT_DISABLE_SANDBOX_THIS_IS_DANGEROUS: "1" },
-    stdin: "inherit",
-    stdout: "inherit",
-    stderr: "inherit",
+// Relaunch once: neither setting can be applied in-process. --use-system-ca is
+// flag-only (no env var, and shebang args aren't portable); WEBKIT_... must be
+// inherited before webview-bun loads -- hence the lazy ./error-dialog.ts import.
+if (!process.env.SLACK_DESKTOP_MCP_RELAUNCHED) {
+  const child = Bun.spawn([process.execPath, "--use-system-ca", ...Bun.argv.slice(1)], {
+    env: { ...process.env, SLACK_DESKTOP_MCP_RELAUNCHED: "1", WEBKIT_DISABLE_SANDBOX_THIS_IS_DANGEROUS: "1" },
+    stdio: ["inherit", "inherit", "inherit"], // transparent: the child is the MCP server
   });
-  process.exit(exitCode);
+  for (const sig of ["SIGINT", "SIGTERM", "SIGHUP"] as const) process.on(sig, () => child.kill(sig));
+  process.exit(await child.exited);
 }
 
 const HELP = `slack-desktop-mcp [options]
@@ -74,9 +71,13 @@ async function cachedSession(): Promise<SlackSession | null> {
     log("no cached session found");
     return null;
   }
-  if (await isSessionValid(cached)) return cached;
-  log(`cached session for '${cached.workspace}' is stale`);
-  return null;
+  const valid = await isSessionValid(cached);
+  if (valid === false) {
+    log(`cached session for '${cached.workspace}' is stale`);
+    return null;
+  }
+  if (valid === null) log("using the cached session unverified");
+  return cached;
 }
 
 async function getSession(workspaceMatch: string, forceRefresh: boolean): Promise<SlackSession> {

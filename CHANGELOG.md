@@ -22,6 +22,12 @@ Releases are automated via CI. To create a new release:
 Stable versions (e.g. `v1.2.0`) publish to npm `@latest`. Pre-release versions
 (e.g. `v1.2.0-rc.1`) publish to npm `@next` and create a GitHub pre-release.
 
+## [v1.0.1] - 2026-08-01
+
+### Fixed
+- Failed connection to Slack `auth.test` should not invalidate cached credentials.
+- Add `--use-system-ca` to the relaunch shim.
+
 ## [v1.0.0] - 2026-07-31
 
 Initial release.
