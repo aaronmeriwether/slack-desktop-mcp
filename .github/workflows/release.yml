@@ -110,8 +110,17 @@ jobs:
           echo "prerelease=$PRERELEASE" >> "$GITHUB_OUTPUT"
           echo "Detected version=$VERSION prerelease=$PRERELEASE"
 
-  release:
+  # A release used to run its own `bun test` on ubuntu only, so a failure
+  # confined to another leg of the Test workflow never reached it — that is
+  # how claude-aws-mfa v1.2.0 published over a red build. Gate on the whole
+  # matrix instead, and only when actually releasing.
+  test:
     needs: detect-release
+    if: needs.detect-release.outputs.version != ''
+    uses: ./.github/workflows/test.yml
+
+  release:
+    needs: [detect-release, test]
     if: needs.detect-release.outputs.version != ''
     runs-on: ubuntu-latest
     permissions:
@@ -127,8 +136,6 @@ jobs:
           bun-version: latest
 
       - run: bun install --frozen-lockfile
-
-      - run: bun test
 
       - name: Set package version
         run: |

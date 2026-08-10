@@ -22,6 +22,11 @@ Releases are automated via CI. To create a new release:
 Stable versions (e.g. `v1.2.0`) publish to npm `@latest`. Pre-release versions
 (e.g. `v1.2.0-rc.1`) publish to npm `@next` and create a GitHub pre-release.
 
+## [v1.0.2]
+
+### Fixed
+- **A release can no longer publish over a red build.** The release workflow ran its own `bun test` on Linux only, so a failure confined to another leg of the Test workflow — a different OS, or the typecheck — could not stop a publish. It now calls that workflow directly and waits for the full matrix before publishing.
+
 ## [v1.0.1] - 2026-08-01
 
 ### Fixed
